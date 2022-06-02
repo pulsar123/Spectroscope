@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Bash script which uses ImageMagick to convert an image of spectrum to a table (spectrum.dat file)
+
+if test $# -eq 0 -o $# -gt 2
+ then
+ echo "First argument: name of the input image file"
+ echo "Second (optional) argument: name of the input dark image file"
+ exit
+ fi
+
+# Optionally subtracting the dark frame if present:
+if test $# -eq 2
+ then
+ composite $1 -compose subtract $2 __a.png
+ IMAGE=__a.png
+ else
+ IMAGE=$1
+ fi
+
+# Using ImnageMagick to (1) collapse the image vertically, and (2) convert it to the text format
+convert $IMAGE -resize 100\%x1\! out.png
+convert out.png  __a.txt
+
+# Using some bash scripting to produce a 2-column table out of the text image
+# First column: x pixel coordinate
+# Second column: pixel brightness
+cat __a.txt  |cut -d\) -f1 |sed 's/,0: (/ /g' |grep -v \# |grep -v ": (" > spectrum.dat
+chmod a+r spectrum.dat
+
+#rm -f __a.txt __a.png
+
